@@ -126,7 +126,9 @@ public class MainActivity extends Activity {
         boolean a11y = enabledA11y != null && enabledA11y.contains(getPackageName() + "/");
         status.setText("Hiển thị trên app khác: " + (overlay ? "có" : "CHƯA")
                 + "\nĐọc ảnh (giữ ảnh đang xem): " + (images ? "có" : "chưa")
-                + "\nTrợ năng (giữ ảnh đang xem): " + (a11y ? "đang bật" : "tắt")
+                + "\nTrợ năng (giữ ảnh đang xem): " + (!a11y ? "tắt"
+                        : ViewerWatcher.connected ? "đang chạy"
+                        : "BỊ HỆ THỐNG NGẮT — bấm \"bật Trợ năng\", tắt rồi bật lại")
                 + "\nThông báo: " + (notif ? "có" : "chưa (không bắt buộc)")
                 + "\nChạy nền không giới hạn: " + (battery ? "có" : "chưa (nên bật)")
                 + "\nKhay kéo thả: " + (DropService.running ? "ĐANG BẬT" : "tắt") + "\n");

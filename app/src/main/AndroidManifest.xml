@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
@@ -10,6 +11,10 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <!-- Để tìm đúng ảnh đang xem trong Thư viện (chỉ đọc, xử lý trong máy) -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <!-- Tùy chọn, chỉ cấp được qua adb: cho phép tự bật lại Trợ năng khi HiOS ngắt nó -->
+    <uses-permission
+        android:name="android.permission.WRITE_SECURE_SETTINGS"
+        tools:ignore="ProtectedPermissions" />
 
     <!-- Cho app "thấy" các app nhận chia sẻ (Android 11+ ẩn app khác) -->
     <queries>
@@ -37,8 +42,10 @@
         android:allowBackup="false"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
 
+        <!-- Ẩn khỏi đa nhiệm: HiOS giết cả app (kể cả Trợ năng) khi vuốt bỏ thẻ app -->
         <activity
             android:name=".MainActivity"
+            android:excludeFromRecents="true"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

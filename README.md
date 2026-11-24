@@ -44,6 +44,17 @@ Khi không kéo gì, cửa sổ của app **vô hình và không cản chạm** 
    - **Giữ ảnh đang xem: cho phép đọc ảnh** và **bật Trợ năng** — chỉ cần nếu dùng tính năng giữ ảnh / thẻ "Đã sao chép".
    - **BẬT khay kéo thả**.
 4. Trên Xiaomi / Oppo / Vivo / Tecno: vào cài đặt pin của máy, bật **Tự khởi động** cho IslandDrop.
+5. **Đừng dùng nút "Dọn dẹp" để tắt IslandDrop.** Khi hệ thống giết app, Trợ năng bị ngắt và Android không tự bật lại. App sẽ hiện thông báo **"Bấm để bật lại"** — bấm vào, tắt rồi bật lại *IslandDrop: giữ ảnh để gửi*.
+
+### (Tùy chọn) Cho app tự bật lại Trợ năng
+
+Nếu có máy tính và cáp, chạy một lần lệnh sau thì app **tự bật lại Trợ năng** mỗi khi bị hệ thống ngắt, không cần bạn bấm gì:
+
+```bash
+adb shell pm grant vn.islanddrop android.permission.WRITE_SECURE_SETTINGS
+```
+
+Quyền này cho phép app sửa cài đặt bảo mật; IslandDrop chỉ dùng nó để tắt/bật lại **đúng dịch vụ Trợ năng của chính nó**, không đụng tới app khác. Thu hồi bằng `adb shell pm revoke vn.islanddrop android.permission.WRITE_SECURE_SETTINGS` hoặc gỡ app.
 
 > ⚠️ Bản build hiện tại là bản **debug**. Play Protect có thể cảnh báo khi cài — đây là cảnh báo chung cho app không tải từ CH Play.
 
@@ -60,6 +71,7 @@ Muốn tắt: mở app → **TẮT khay kéo thả**. Muốn gỡ: gỡ như m�
 | Trợ năng *(tùy chọn)* | Nhận biết khi bạn giữ ảnh trong Thư viện Tecno, hoặc bấm nút "Sao chép". **Không chặn hay thay đổi thao tác chạm.** |
 | Đọc ảnh *(tùy chọn)* | Tìm đúng tấm ảnh bạn đang xem để gửi. |
 | Khởi động cùng máy | Tự bật lại khay sau khi khởi động máy, nếu bạn đã bật trước đó. |
+| Sửa cài đặt bảo mật *(tùy chọn, chỉ cấp qua adb)* | Tự bật lại Trợ năng của IslandDrop khi hệ thống ngắt nó. |
 
 Mọi xử lý diễn ra **trong máy**, app **không có quyền Internet**. Chi tiết: [PRIVACY.md](PRIVACY.md).
 

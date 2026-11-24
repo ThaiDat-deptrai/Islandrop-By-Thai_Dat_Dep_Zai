@@ -26,6 +26,8 @@ Dịch vụ Trợ năng của IslandDrop:
 - **không** đọc nội dung các app khác, ngoài: thông báo của Thư viện Tecno, chữ trên màn hình xem ảnh (ngày giờ) khi bạn giữ ảnh, và nhãn của nút vừa bấm;
 - chỉ chụp màn hình khi bạn giữ ảnh trong Thư viện, để nhận ra ảnh đang xem.
 
+Nếu bạn cấp thêm quyền tùy chọn `WRITE_SECURE_SETTINGS` (chỉ cấp được qua adb), IslandDrop chỉ dùng nó để tắt/bật lại **đúng dịch vụ Trợ năng của chính nó** khi hệ thống ngắt dịch vụ này; các dịch vụ Trợ năng của app khác được giữ nguyên.
+
 Bạn có thể tắt Trợ năng bất cứ lúc nào trong **Cài đặt → Trợ năng**. Các tính năng kéo thả vẫn chạy bình thường mà không cần Trợ năng.
 
 ## Xóa dữ liệu

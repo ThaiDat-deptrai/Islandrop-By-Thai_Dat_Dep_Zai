@@ -60,6 +60,8 @@ public class DropService extends Service implements IslandView.Host {
         }
         instance = this;
         L.i(this, "Đã bật IslandDrop");
+        // Nếu HiOS từng giết app, Trợ năng bị đánh dấu "Crashed" và không tự nối lại.
+        new Handler(Looper.getMainLooper()).postDelayed(this::checkAccessibility, 6000);
     }
 
     @Override
@@ -107,6 +109,93 @@ public class DropService extends Service implements IslandView.Host {
         } else {
             startForeground(1, n);
         }
+    }
+
+    /** Trợ năng đã bật trong Cài đặt nhưng không chạy (bị hệ thống ngắt) -> nhắc người dùng bật lại. */
+    static boolean accessibilityBroken(Context c) {
+        String s = android.provider.Settings.Secure.getString(c.getContentResolver(),
+                android.provider.Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+        boolean enabled = s != null && s.contains(c.getPackageName() + "/");
+        return enabled && !ViewerWatcher.connected;
+    }
+
+    private static final long A11Y_CHECK_MS = 5 * 60 * 1000;
+
+    private void checkAccessibility() {
+        if (instance != this) return;
+        Handler h = new Handler(Looper.getMainLooper());
+        h.postDelayed(this::checkAccessibility, A11Y_CHECK_MS);   // kiểm tra định kỳ
+        if (!accessibilityBroken(this)) return;
+        if (tryReEnableAccessibility()) {
+            // đợi hệ thống kết nối lại rồi xem đã ổn chưa
+            h.postDelayed(() -> {
+                if (accessibilityBroken(this)) notifyAccessibilityBroken();
+                else L.i(this, "Đã tự bật lại Trợ năng thành công");
+            }, 4000);
+            return;
+        }
+        notifyAccessibilityBroken();
+    }
+
+    /**
+     * Tự bật lại Trợ năng của chính IslandDrop: tắt rồi bật lại mục của mình trong
+     * ENABLED_ACCESSIBILITY_SERVICES để hệ thống kết nối lại. Chỉ chạy được khi người dùng đã
+     * cấp quyền WRITE_SECURE_SETTINGS qua máy tính (adb). Không đụng tới dịch vụ của app khác.
+     */
+    private boolean tryReEnableAccessibility() {
+        if (checkSelfPermission(android.Manifest.permission.WRITE_SECURE_SETTINGS)
+                != android.content.pm.PackageManager.PERMISSION_GRANTED) return false;
+        try {
+            android.content.ContentResolver cr = getContentResolver();
+            String key = android.provider.Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES;
+            String mine = new android.content.ComponentName(this, ViewerWatcher.class).flattenToString();
+            String cur = android.provider.Settings.Secure.getString(cr, key);
+            List<String> others = new ArrayList<>();
+            if (cur != null) {
+                for (String s : cur.split(":")) {
+                    if (!s.isEmpty() && !s.startsWith(getPackageName() + "/")) others.add(s);
+                }
+            }
+            android.provider.Settings.Secure.putString(cr, key, android.text.TextUtils.join(":", others));
+            List<String> withMine = new ArrayList<>(others);
+            withMine.add(mine);
+            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                try {
+                    android.provider.Settings.Secure.putString(cr, key, android.text.TextUtils.join(":", withMine));
+                    android.provider.Settings.Secure.putString(cr,
+                            android.provider.Settings.Secure.ACCESSIBILITY_ENABLED, "1");
+                } catch (RuntimeException ex) {
+                    L.i(this, "Tự bật lại Trợ năng lỗi: " + ex);
+                }
+            }, 700);
+            L.i(this, "Đang tự bật lại Trợ năng");
+            return true;
+        } catch (RuntimeException ex) {
+            L.i(this, "Không tự bật lại được Trợ năng: " + ex);
+            return false;
+        }
+    }
+
+    private void notifyAccessibilityBroken() {
+        L.i(this, "Trợ năng đã bật nhưng bị hệ thống ngắt -> nhắc bật lại");
+        NotificationManager nm = getSystemService(NotificationManager.class);
+        nm.createNotificationChannel(new NotificationChannel(
+                "warn", "Cảnh báo", NotificationManager.IMPORTANCE_DEFAULT));
+        PendingIntent open = PendingIntent.getActivity(this, 1,
+                new Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                PendingIntent.FLAG_IMMUTABLE);
+        Notification n = new Notification.Builder(this, "warn")
+                .setSmallIcon(android.R.drawable.stat_sys_warning)
+                .setContentTitle("Giữ ảnh / Sao chép đang không chạy")
+                .setContentText("Hệ thống đã ngắt Trợ năng của IslandDrop. Bấm để tắt rồi bật lại.")
+                .setStyle(new Notification.BigTextStyle().bigText(
+                        "Hệ thống đã ngắt Trợ năng của IslandDrop (thường do dọn dẹp đa nhiệm). "
+                                + "Bấm vào đây, TẮT rồi BẬT lại \"IslandDrop: giữ ảnh để gửi\"."))
+                .setContentIntent(open)
+                .setAutoCancel(true)
+                .build();
+        nm.notify(2, n);
     }
 
     private boolean addIsland() {

@@ -50,8 +50,18 @@ public class ViewerWatcher extends AccessibilityService {
     private long lastTrigger;
     private boolean busy;
 
+    /** true khi dịch vụ đang thực sự kết nối (khác với "đã bật trong Cài đặt"). */
+    static volatile boolean connected = false;
+
+    @Override
+    public boolean onUnbind(android.content.Intent intent) {
+        connected = false;
+        return super.onUnbind(intent);
+    }
+
     @Override
     protected void onServiceConnected() {
+        connected = true;
         Rect b = getSystemService(WindowManager.class).getMaximumWindowMetrics().getBounds();
         matcher = new ViewerMatcher(this, b.width(), b.height());
         L.i(this, "Watcher: đã kết nối, màn hình " + b.width() + "x" + b.height());
@@ -286,6 +296,7 @@ public class ViewerWatcher extends AccessibilityService {
 
     @Override
     public void onDestroy() {
+        connected = false;
         main.removeCallbacksAndMessages(null);
         worker.shutdownNow();
         if (matcher != null) matcher.shutdown();

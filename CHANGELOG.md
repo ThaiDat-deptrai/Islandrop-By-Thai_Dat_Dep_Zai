@@ -2,6 +2,15 @@
 
 Định dạng theo [Keep a Changelog](https://keepachangelog.com/vi/1.1.0/).
 
+## [1.1] – 2026-11-24
+
+### Sửa
+- **Giữ ảnh đang xem / thẻ "Đã sao chép" ngừng chạy sau khi dọn đa nhiệm.** Khi HiOS giết app (vuốt bỏ thẻ app, nút "Dọn dẹp"), Android đánh dấu Trợ năng là *Crashed* và không tự kết nối lại, dù Cài đặt vẫn hiện "đang bật".
+  - Ẩn IslandDrop khỏi màn hình đa nhiệm để không vô tình vuốt bỏ.
+  - Tự kiểm tra lúc khởi động và mỗi 5 phút; nếu Trợ năng bị ngắt thì hiện **thông báo "Bấm để bật lại"**.
+  - Màn hình cài đặt ghi rõ "Bị hệ thống ngắt" thay vì "đang bật".
+  - **Tự bật lại Trợ năng** không cần thao tác nếu đã cấp quyền `WRITE_SECURE_SETTINGS` qua máy tính (tùy chọn, xem README).
+
 ## [1.0] – 2026-11-24
 
 Bản đầu tiên, thử trên Tecno Camon 30 5G (Android 16, HiOS 16.3).
