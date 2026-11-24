@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="watcher_desc">IslandDrop dùng Trợ năng để: (1) nhận biết khi bạn giữ ngón tay lên một ảnh đang mở trong Thư viện, và (2) nhận biết khi bạn bấm nút "Sao chép" ở bất kỳ app nào — để hiện khay gửi nhanh từ đảo. IslandDrop không chặn hay thay đổi thao tác chạm, chỉ đọc bộ nhớ tạm ngay sau khi bạn bấm Sao chép, bỏ qua nội dung nhạy cảm (mật khẩu), và không gửi dữ liệu ra khỏi máy.</string>
+</resources>

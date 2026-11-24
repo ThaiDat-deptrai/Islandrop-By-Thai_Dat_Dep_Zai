@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  - typeNotificationStateChanged / typeWindowStateChanged: chỉ xử lý của Thư viện Tecno (lọc trong code)
+  - typeViewClicked: chỉ để nhận biết nút "Sao chép"/"Copy" ở mọi app (không ghi lại nội dung)
+  - flagReportViewIds: cần để tìm view theo ID (photo_view của Thư viện)
+-->
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityEventTypes="typeWindowStateChanged|typeNotificationStateChanged|typeViewClicked"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:accessibilityFlags="flagReportViewIds"
+    android:canRetrieveWindowContent="true"
+    android:canTakeScreenshot="true"
+    android:description="@string/watcher_desc"
+    android:notificationTimeout="50" />
