@@ -1,4 +1,4 @@
-# Islanđrop By Thai_Dat_Dep_Zai :)
+# IslanDrop By Thai_Dat_Dep_Zai :)
 
 > Kéo ảnh, chữ lên **đảo** (chỗ camera) rồi thả vào app để gửi — giống "Origin Island" của Vivo, làm cho máy Android khác.
 
