@@ -17,8 +17,8 @@ IslandDrop là một app Android nhỏ, viết bằng Java, **không cần root*
 | **Giữ ảnh đang xem** *(Thư viện Tecno)* | Mở một ảnh, giữ ngón tay lên ảnh: ảnh thu nhỏ **bay lên đảo**, khay mở ra để chạm chọn app. |
 | **Thẻ "Đã sao chép"** | Bấm **Sao chép / Copy** ở bất kỳ app nào: đảo hiện thẻ xem trước. Giữ thẻ rồi kéo tới app, hoặc chạm thẻ rồi chạm app. |
 | **Nút "+" thêm app** | Ô cuối khay. Mở danh sách mọi app nhận chia sẻ: **Ghim lên đầu / Bình thường / Ẩn**. App cài sau này tự có trong danh sách. |
-| **Đảo luôn hiện** | Bật bằng ô cài đặt nhanh *Đảo luôn hiện*: viên đen luôn nằm quanh camera, chạm để mở khay **app mở nhanh** (chọn app bằng nút "+"). Tự ẩn khi xoay ngang. |
-| **Tắt Trợ năng 1 chạm** | Ô cài đặt nhanh *Trợ năng đảo*: tắt trước khi vào app ngân hàng đòi tắt Trợ năng (vd MB Bank), bật lại khi xong. |
+| **Đảo luôn hiện kiểu Atoll** | Bật bằng ô cài đặt nhanh *Đảo luôn hiện*. Viên đảo hiện **hoạt động trực tiếp**: ảnh bìa + sóng nhạc khi phát nhạc, đếm ngược khi hẹn giờ, % pin khi cắm sạc. **Chạm / vuốt xuống** mở bảng 3 tab: **Nhạc** (điều khiển + tua), **Ứng dụng** (app mở nhanh), **Hẹn giờ**. Vuốt ngang để chuyển bài. Tự ẩn khi xoay ngang. |
+| **Tắt Trợ năng 5 phút** | Cho app ngân hàng đòi tắt Trợ năng (vd MB Bank): bấm **"Tắt Trợ năng 5 phút"** ngay trong thông báo *IslandDrop đang chạy* (hoặc tab Ứng dụng, hoặc ô *Trợ năng đảo*). Hết 5 phút **tự bật lại**. |
 | **Tự cuộn mượt** | Khay nhiều app: rê sát mép trái/phải để tự cuộn (có gia tốc), hoặc vuốt ngang khi ở chế độ chạm. |
 | **Hiệu ứng lò xo 120Hz** | Mọi chuyển động dùng lò xo vật lý, nảy nhẹ giống Vivo. |
 | **Thông minh dần** | App bạn hay gửi tự lên đầu khay. |
@@ -52,9 +52,9 @@ Khi không kéo gì, cửa sổ của app **vô hình và không cản chạm** 
 
 Một số app ngân hàng (vd **MB Bank**) không cho đăng nhập khi có dịch vụ Trợ năng lạ đang bật. Đây là cơ chế bảo vệ tài khoản của ngân hàng — IslandDrop **không** tìm cách né nó. Thay vào đó:
 
-1. Kéo thanh thông báo xuống, chạm ô **Trợ năng đảo** để tắt (thêm ô bằng nút trong app, hoặc bút chì → kéo ô lên).
+1. Kéo thanh thông báo xuống, ở thông báo **IslandDrop đang chạy** bấm **"Tắt Trợ năng 5 phút"** (hoặc chạm ô **Trợ năng đảo**, hoặc nút trong tab Ứng dụng của đảo).
 2. Dùng app ngân hàng.
-3. Chạm ô lần nữa để bật lại.
+3. Sau 5 phút Trợ năng **tự bật lại**. Muốn bật sớm: bấm **"Bật lại ngay"** trong cùng thông báo.
 
 Khay kéo thả ảnh/chữ không cần Trợ năng nên vẫn chạy khi tắt.
 
@@ -83,6 +83,7 @@ Muốn tắt: mở app → **TẮT khay kéo thả**. Muốn gỡ: gỡ như m�
 | Trợ năng *(tùy chọn)* | Nhận biết khi bạn giữ ảnh trong Thư viện Tecno, hoặc bấm nút "Sao chép". **Không chặn hay thay đổi thao tác chạm.** |
 | Đọc ảnh *(tùy chọn)* | Tìm đúng tấm ảnh bạn đang xem để gửi. |
 | Khởi động cùng máy | Tự bật lại khay sau khi khởi động máy, nếu bạn đã bật trước đó. |
+| Truy cập thông báo *(tùy chọn)* | Đọc **bài nhạc đang phát** (tên, ảnh bìa, điều khiển) cho đảo. IslandDrop chỉ dùng phiên phát nhạc, **không đọc nội dung thông báo**. |
 | Sửa cài đặt bảo mật *(tùy chọn, chỉ cấp qua adb)* | Tự bật lại Trợ năng của IslandDrop khi hệ thống ngắt nó. |
 
 Mọi xử lý diễn ra **trong máy**, app **không có quyền Internet**. Chi tiết: [PRIVACY.md](PRIVACY.md).
@@ -143,6 +144,10 @@ app/src/main/java/vn/islanddrop/
 ├── A11yTile.java           Ô cài đặt nhanh "Trợ năng đảo"
 ├── IslandTile.java         Ô cài đặt nhanh "Đảo luôn hiện"
 ├── QuickApps.java          Danh sách app mở nhanh trên đảo
+├── PillView.java           Viên đảo luôn hiện: hoạt động trực tiếp (nhạc / hẹn giờ / sạc)
+├── PanelView.java          Bảng mở rộng 3 tab: Nhạc, Ứng dụng, Hẹn giờ
+├── MediaListener.java      Đọc nhạc đang phát (MediaSession)
+├── MediaState.java         Trạng thái bài nhạc
 └── L.java                  Ghi log ra file
 ```
 

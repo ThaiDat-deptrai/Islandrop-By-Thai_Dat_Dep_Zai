@@ -19,6 +19,23 @@ final class A11yToggle {
 
     private A11yToggle() {}
 
+    /** Tạm tắt bao lâu (vd để đăng nhập app ngân hàng đòi tắt Trợ năng). */
+    static final long PAUSE_MS = 5 * 60_000L;
+    private static final String KEY_RESUME_AT = "a11y_resume_at";
+
+    /** Thời điểm (System.currentTimeMillis) sẽ tự bật lại; 0 = không tạm tắt. */
+    static long pausedUntil(Context c) {
+        return c.getSharedPreferences(MainActivity.PREFS, Context.MODE_PRIVATE).getLong(KEY_RESUME_AT, 0);
+    }
+
+    static void setPausedUntil(Context c, long t) {
+        c.getSharedPreferences(MainActivity.PREFS, Context.MODE_PRIVATE).edit().putLong(KEY_RESUME_AT, t).apply();
+    }
+
+    static String clock(long t) {
+        return new java.text.SimpleDateFormat("HH:mm", java.util.Locale.US).format(new java.util.Date(t));
+    }
+
     static boolean canToggle(Context c) {
         return c.checkSelfPermission(Manifest.permission.WRITE_SECURE_SETTINGS)
                 == PackageManager.PERMISSION_GRANTED;

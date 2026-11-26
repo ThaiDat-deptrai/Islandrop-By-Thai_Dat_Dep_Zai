@@ -114,6 +114,9 @@ public class MainActivity extends Activity {
             refresh();
         });
 
+        addButton(root, "Nhạc trên đảo: cho phép đọc nhạc đang phát", () -> startActivity(
+                new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)));
+
         addButton(root, "Chọn app mở nhanh trên đảo", () -> startActivity(
                 new Intent(this, AppPickerActivity.class).putExtra(AppPickerActivity.EXTRA_LAUNCHER, true)));
 
@@ -164,7 +167,13 @@ public class MainActivity extends Activity {
                 + "\nThông báo: " + (notif ? "có" : "chưa (không bắt buộc)")
                 + "\nChạy nền không giới hạn: " + (battery ? "có" : "chưa (nên bật)")
                 + "\nKhay kéo thả: " + (DropService.running ? "ĐANG BẬT" : "tắt")
-                + "\nĐảo luôn hiện: " + (isAlwaysIsland(this) ? "bật" : "tắt") + "\n");
+                + "\nĐảo luôn hiện: " + (isAlwaysIsland(this) ? "bật" : "tắt")
+                + "\nNhạc trên đảo: " + (hasMediaAccess() ? "có" : "chưa cho phép") + "\n");
+    }
+
+    private boolean hasMediaAccess() {
+        String s = Settings.Secure.getString(getContentResolver(), "enabled_notification_listeners");
+        return s != null && s.contains(getPackageName() + "/");
     }
 
     /** Hỏi hệ thống thêm ô vào thanh Cài đặt nhanh (Android 13+); máy cũ thì tự thêm bằng tay. */

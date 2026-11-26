@@ -17,6 +17,7 @@ IslandDrop được thiết kế để **mọi thứ nằm trong máy của bạ
 | Danh sách ảnh trong máy | Để tìm đúng ảnh đang xem: đọc ảnh thu nhỏ của các ảnh cùng phút chụp hoặc gần đây | Đặc trưng màu giữ tạm trong bộ nhớ, mất khi app tắt |
 | Bộ nhớ tạm (clipboard) | **Chỉ ngay sau khi bạn bấm "Sao chép"/"Copy"** | Không lưu. Nội dung được đánh dấu nhạy cảm (mật khẩu, OTP) bị bỏ qua |
 | Sự kiện Trợ năng | Thông báo của Thư viện Tecno, và nút bấm có chữ "Sao chép"/"Copy" | Không lưu nội dung; log chỉ ghi số ký tự hoặc nhãn nút |
+| Bài nhạc đang phát *(nếu cho phép Truy cập thông báo)* | Liên tục khi bật Đảo luôn hiện: tên bài, ca sĩ, ảnh bìa, vị trí phát qua MediaSession | Chỉ giữ trong bộ nhớ; **không đọc nội dung thông báo** |
 | Thống kê app hay dùng | Khi bạn gửi qua một app | Số lần dùng mỗi app, trong bộ nhớ riêng của IslandDrop |
 
 ## Dịch vụ Trợ năng

@@ -2,6 +2,24 @@
 
 Định dạng theo [Keep a Changelog](https://keepachangelog.com/vi/1.1.0/).
 
+## [1.3] – 2026-11-26
+
+Đảo luôn hiện kiểu **Atoll**.
+
+### Thêm
+- **Hoạt động trực tiếp trên viên đảo** (giãn ra theo lò xo, nội dung hiện dần):
+  - **Nhạc**: ảnh bìa + sóng nhạc 4 vạch nhảy, viền sáng "thở" theo màu ảnh bìa.
+  - **Hẹn giờ**: đồng hồ + đếm ngược; hết giờ thì hiện "Hết giờ", rung và thông báo.
+  - **Sạc pin**: cắm sạc thì hiện tia sét + % pin vài giây.
+- **Bảng mở rộng 3 tab** (chạm hoặc vuốt xuống viên đảo): **Nhạc** (ảnh bìa, tên bài, thanh tua kéo được, lùi / phát-dừng / sang bài), **Ứng dụng** (app mở nhanh), **Hẹn giờ** (1–30 phút, +1 phút, Hủy). Nở ra từ viên đảo, tự thu sau 12 giây không chạm.
+- **Vuốt ngang viên đảo** để chuyển bài.
+- **Tắt Trợ năng 5 phút rồi tự bật lại** (cho app ngân hàng như MB Bank): nút ngay trong thông báo "IslandDrop đang chạy", trong tab Ứng dụng, và ô cài đặt nhanh. Đang tạm tắt thì có nút "Bật lại ngay"; khởi động lại máy vẫn tự bật lại đúng giờ.
+- Viên đảo dùng **lớp phủ Trợ năng** (nằm trên thanh trạng thái) nên chạm vào chỗ camera luôn trúng.
+
+### Đổi
+- Chạm viên đảo mở bảng 3 tab thay cho khay app nhanh cũ.
+- Thông báo thường trực đổi sang mức "thấp" để luôn thấy nút.
+
 ## [1.2] – 2026-11-26
 
 ### Thêm

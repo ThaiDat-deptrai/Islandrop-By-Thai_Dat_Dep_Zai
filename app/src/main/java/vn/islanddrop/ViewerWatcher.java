@@ -52,16 +52,24 @@ public class ViewerWatcher extends AccessibilityService {
 
     /** true khi dịch vụ đang thực sự kết nối (khác với "đã bật trong Cài đặt"). */
     static volatile boolean connected = false;
+    /** Để viên đảo luôn hiện dùng lớp phủ Trợ năng (nằm TRÊN thanh trạng thái, chạm luôn trúng). */
+    static volatile ViewerWatcher instance;
 
     @Override
     public boolean onUnbind(android.content.Intent intent) {
         connected = false;
+        instance = null;
+        DropService svc = DropService.instance;
+        if (svc != null) svc.reattachPill();
         return super.onUnbind(intent);
     }
 
     @Override
     protected void onServiceConnected() {
         connected = true;
+        instance = this;
+        DropService svc = DropService.instance;
+        if (svc != null) svc.reattachPill();
         Rect b = getSystemService(WindowManager.class).getMaximumWindowMetrics().getBounds();
         matcher = new ViewerMatcher(this, b.width(), b.height());
         L.i(this, "Watcher: đã kết nối, màn hình " + b.width() + "x" + b.height());
@@ -297,6 +305,7 @@ public class ViewerWatcher extends AccessibilityService {
     @Override
     public void onDestroy() {
         connected = false;
+        if (instance == this) instance = null;
         main.removeCallbacksAndMessages(null);
         worker.shutdownNow();
         if (matcher != null) matcher.shutdown();

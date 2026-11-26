@@ -8,8 +8,8 @@ import android.service.quicksettings.Tile;
 import android.service.quicksettings.TileService;
 
 /**
- * Ô cài đặt nhanh "Trợ năng đảo": chạm để tắt/bật Trợ năng của IslandDrop
- * (vd tắt trước khi mở app ngân hàng đòi tắt Trợ năng).
+ * Ô cài đặt nhanh "Trợ năng đảo": đang bật -> TẠM TẮT 5 PHÚT rồi tự bật lại
+ * (vd để đăng nhập app ngân hàng đòi tắt Trợ năng); đang tắt -> bật lại ngay.
  * Chưa có quyền WRITE_SECURE_SETTINGS thì mở trang Trợ năng để người dùng tự bật/tắt.
  */
 public class A11yTile extends TileService {
@@ -30,7 +30,22 @@ public class A11yTile extends TileService {
             }
             return;
         }
-        A11yToggle.setEnabled(this, !A11yToggle.isEnabled(this));
+        DropService svc = DropService.instance;
+        if (A11yToggle.isEnabled(this)) {
+            if (svc != null) {
+                svc.pauseAccessibility();
+            } else {
+                A11yToggle.setEnabled(this, false);
+                A11yToggle.setPausedUntil(this, System.currentTimeMillis() + A11yToggle.PAUSE_MS);
+            }
+        } else {
+            if (svc != null) {
+                svc.resumeAccessibility();
+            } else {
+                A11yToggle.setPausedUntil(this, 0);
+                A11yToggle.setEnabled(this, true);
+            }
+        }
         refresh();
     }
 
@@ -38,9 +53,13 @@ public class A11yTile extends TileService {
         Tile t = getQsTile();
         if (t == null) return;
         boolean on = A11yToggle.isEnabled(this);
+        long at = A11yToggle.pausedUntil(this);
         t.setState(on ? Tile.STATE_ACTIVE : Tile.STATE_INACTIVE);
         t.setLabel("Trợ năng đảo");
-        if (Build.VERSION.SDK_INT >= 29) t.setSubtitle(on ? "Đang bật" : "Đã tắt");
+        if (Build.VERSION.SDK_INT >= 29) {
+            t.setSubtitle(on ? "Chạm: tắt 5 phút"
+                    : at > System.currentTimeMillis() ? "Tự bật lúc " + A11yToggle.clock(at) : "Đã tắt");
+        }
         t.updateTile();
     }
 }

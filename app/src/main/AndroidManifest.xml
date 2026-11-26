@@ -102,6 +102,17 @@
                 android:resource="@xml/viewer_watcher" />
         </service>
 
+        <!-- Đọc nhạc đang phát cho đảo (chỉ dùng MediaSession, không đọc nội dung thông báo) -->
+        <service
+            android:name=".MediaListener"
+            android:exported="true"
+            android:label="IslandDrop: nhạc trên đảo"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+
         <!-- Ô cài đặt nhanh -->
         <service
             android:name=".A11yTile"
