@@ -20,6 +20,7 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.view.DragEvent;
 import android.view.Gravity;
+import android.view.View;
 import android.view.WindowManager;
 
 import java.io.File;
@@ -60,6 +61,7 @@ public class DropService extends Service implements IslandView.Host {
         }
         instance = this;
         L.i(this, "Đã bật IslandDrop");
+        applyAlwaysIsland();
         // Nếu HiOS từng giết app, Trợ năng bị đánh dấu "Crashed" và không tự nối lại.
         new Handler(Looper.getMainLooper()).postDelayed(this::checkAccessibility, 6000);
     }
@@ -74,6 +76,7 @@ public class DropService extends Service implements IslandView.Host {
         running = false;
         if (instance == this) instance = null;
         removeFly();
+        removePill();
         if (island != null) {
             try {
                 wm.removeViewImmediate(island);
@@ -113,10 +116,8 @@ public class DropService extends Service implements IslandView.Host {
 
     /** Trợ năng đã bật trong Cài đặt nhưng không chạy (bị hệ thống ngắt) -> nhắc người dùng bật lại. */
     static boolean accessibilityBroken(Context c) {
-        String s = android.provider.Settings.Secure.getString(c.getContentResolver(),
-                android.provider.Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
-        boolean enabled = s != null && s.contains(c.getPackageName() + "/");
-        return enabled && !ViewerWatcher.connected;
+        // tắt bằng nút nhanh => không có trong Cài đặt => không tự bật lại (không "cãi" người dùng)
+        return A11yToggle.isEnabled(c) && !ViewerWatcher.connected;
     }
 
     private static final long A11Y_CHECK_MS = 5 * 60 * 1000;
@@ -143,37 +144,10 @@ public class DropService extends Service implements IslandView.Host {
      * cấp quyền WRITE_SECURE_SETTINGS qua máy tính (adb). Không đụng tới dịch vụ của app khác.
      */
     private boolean tryReEnableAccessibility() {
-        if (checkSelfPermission(android.Manifest.permission.WRITE_SECURE_SETTINGS)
-                != android.content.pm.PackageManager.PERMISSION_GRANTED) return false;
-        try {
-            android.content.ContentResolver cr = getContentResolver();
-            String key = android.provider.Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES;
-            String mine = new android.content.ComponentName(this, ViewerWatcher.class).flattenToString();
-            String cur = android.provider.Settings.Secure.getString(cr, key);
-            List<String> others = new ArrayList<>();
-            if (cur != null) {
-                for (String s : cur.split(":")) {
-                    if (!s.isEmpty() && !s.startsWith(getPackageName() + "/")) others.add(s);
-                }
-            }
-            android.provider.Settings.Secure.putString(cr, key, android.text.TextUtils.join(":", others));
-            List<String> withMine = new ArrayList<>(others);
-            withMine.add(mine);
-            new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                try {
-                    android.provider.Settings.Secure.putString(cr, key, android.text.TextUtils.join(":", withMine));
-                    android.provider.Settings.Secure.putString(cr,
-                            android.provider.Settings.Secure.ACCESSIBILITY_ENABLED, "1");
-                } catch (RuntimeException ex) {
-                    L.i(this, "Tự bật lại Trợ năng lỗi: " + ex);
-                }
-            }, 700);
-            L.i(this, "Đang tự bật lại Trợ năng");
-            return true;
-        } catch (RuntimeException ex) {
-            L.i(this, "Không tự bật lại được Trợ năng: " + ex);
-            return false;
-        }
+        if (!A11yToggle.setEnabled(this, false)) return false;
+        new Handler(Looper.getMainLooper()).postDelayed(() -> A11yToggle.setEnabled(this, true), 700);
+        L.i(this, "Đang tự bật lại Trợ năng");
+        return true;
     }
 
     private void notifyAccessibilityBroken() {
@@ -277,13 +251,88 @@ public class DropService extends Service implements IslandView.Host {
     }
 
     @Override
-    public void onAddApps() {
+    public void onAddApps(boolean launcher) {
         try {
             startActivity(new Intent(this, AppPickerActivity.class)
+                    .putExtra(AppPickerActivity.EXTRA_LAUNCHER, launcher)
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
         } catch (RuntimeException ex) {
             L.i(this, "Không mở được màn hình chọn app: " + ex);
         }
+    }
+
+    @Override
+    public void onLaunchApp(ShareTargets.Target t) {
+        QuickApps.launch(this, t.component);
+    }
+
+    // ---------------------------------------------------------------- đảo luôn hiện
+
+    private View pill;
+
+    /** Bật/tắt viên đảo luôn hiện theo cài đặt (ẩn khi xoay ngang để không che phim/game). */
+    void applyAlwaysIsland() {
+        boolean portrait = getResources().getConfiguration().orientation
+                != android.content.res.Configuration.ORIENTATION_LANDSCAPE;
+        boolean want = MainActivity.isAlwaysIsland(this) && portrait;
+        if (want && pill == null) addPill();
+        else if (!want && pill != null) removePill();
+    }
+
+    @Override
+    public void onConfigurationChanged(android.content.res.Configuration c) {
+        super.onConfigurationChanged(c);
+        applyAlwaysIsland();
+    }
+
+    private void addPill() {
+        float dp = getResources().getDisplayMetrics().density;
+        View v = new View(this) {
+            private final android.graphics.Paint p = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+
+            @Override
+            protected void onDraw(android.graphics.Canvas c) {
+                p.setColor(0xFF000000);
+                float r = getHeight() / 2f;
+                c.drawRoundRect(0, 0, getWidth(), getHeight(), r, r, p);
+            }
+        };
+        v.setOnClickListener(x -> {
+            x.performHapticFeedback(android.view.HapticFeedbackConstants.CONTEXT_CLICK);
+            if (island != null) island.toggleLauncher(QuickApps.targets(this));
+        });
+        WindowManager.LayoutParams p = new WindowManager.LayoutParams(
+                (int) (104 * dp), (int) (30 * dp),
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                        | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+                        | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+                PixelFormat.TRANSLUCENT);
+        p.gravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
+        p.y = (int) (5 * dp);
+        p.layoutInDisplayCutoutMode = Build.VERSION.SDK_INT >= 30
+                ? WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+                : WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+        p.setTitle("IslandDrop-pill");
+        try {
+            wm.addView(v, p);
+            pill = v;
+            L.i(this, "Đảo luôn hiện: bật");
+        } catch (RuntimeException ex) {
+            L.i(this, "Không hiện được đảo luôn hiện: " + ex);
+        }
+    }
+
+    private void removePill() {
+        if (pill == null) return;
+        try {
+            wm.removeViewImmediate(pill);
+        } catch (RuntimeException ignored) {
+            // đã gỡ
+        }
+        pill = null;
+        if (island != null) island.dismiss();
+        L.i(this, "Đảo luôn hiện: tắt");
     }
 
     /** Gọi sau khi người dùng đổi ghim/ẩn app. */

@@ -28,8 +28,23 @@ public class MainActivity extends Activity {
     }
 
     private void setEnabled(boolean on) {
-        SharedPreferences p = getSharedPreferences(PREFS, MODE_PRIVATE);
+        setEnabledPref(this, on);
+    }
+
+    static void setEnabledPref(Context c, boolean on) {
+        SharedPreferences p = c.getSharedPreferences(PREFS, MODE_PRIVATE);
         p.edit().putBoolean(KEY_ENABLED, on).apply();
+    }
+
+    static final String KEY_ALWAYS = "always_island";
+
+    /** Chế độ "đảo luôn hiện": viên đen luôn hiện quanh camera, chạm để mở app nhanh. */
+    static boolean isAlwaysIsland(Context c) {
+        return c.getSharedPreferences(PREFS, MODE_PRIVATE).getBoolean(KEY_ALWAYS, false);
+    }
+
+    static void setAlwaysIsland(Context c, boolean on) {
+        c.getSharedPreferences(PREFS, MODE_PRIVATE).edit().putBoolean(KEY_ALWAYS, on).apply();
     }
 
     @Override
@@ -93,7 +108,24 @@ public class MainActivity extends Activity {
             status.postDelayed(this::refresh, 400);
         });
 
-        setContentView(root);
+        addButton(root, "Đảo luôn hiện: bật / tắt", () -> {
+            setAlwaysIsland(this, !isAlwaysIsland(this));
+            if (DropService.instance != null) DropService.instance.applyAlwaysIsland();
+            refresh();
+        });
+
+        addButton(root, "Chọn app mở nhanh trên đảo", () -> startActivity(
+                new Intent(this, AppPickerActivity.class).putExtra(AppPickerActivity.EXTRA_LAUNCHER, true)));
+
+        addButton(root, "Thêm nút \"Trợ năng đảo\" vào Cài đặt nhanh", () ->
+                requestTile(A11yTile.class, "Trợ năng đảo"));
+
+        addButton(root, "Thêm nút \"Đảo luôn hiện\" vào Cài đặt nhanh", () ->
+                requestTile(IslandTile.class, "Đảo luôn hiện"));
+
+        android.widget.ScrollView scroll = new android.widget.ScrollView(this);
+        scroll.addView(root);
+        setContentView(scroll);
 
         // Bật nhanh từ máy tính: adb shell am start -n vn.islanddrop/.MainActivity --ez start true
         if (getIntent().getBooleanExtra("start", false) && Settings.canDrawOverlays(this)) {
@@ -131,7 +163,21 @@ public class MainActivity extends Activity {
                         : "BỊ HỆ THỐNG NGẮT — bấm \"bật Trợ năng\", tắt rồi bật lại")
                 + "\nThông báo: " + (notif ? "có" : "chưa (không bắt buộc)")
                 + "\nChạy nền không giới hạn: " + (battery ? "có" : "chưa (nên bật)")
-                + "\nKhay kéo thả: " + (DropService.running ? "ĐANG BẬT" : "tắt") + "\n");
+                + "\nKhay kéo thả: " + (DropService.running ? "ĐANG BẬT" : "tắt")
+                + "\nĐảo luôn hiện: " + (isAlwaysIsland(this) ? "bật" : "tắt") + "\n");
+    }
+
+    /** Hỏi hệ thống thêm ô vào thanh Cài đặt nhanh (Android 13+); máy cũ thì tự thêm bằng tay. */
+    private void requestTile(Class<?> tile, String label) {
+        if (android.os.Build.VERSION.SDK_INT < 33) {
+            status.setText("Kéo thanh thông báo xuống → bút chì (sửa) → kéo ô \"" + label + "\" lên.");
+            return;
+        }
+        android.app.StatusBarManager sbm = getSystemService(android.app.StatusBarManager.class);
+        sbm.requestAddTileService(new android.content.ComponentName(this, tile), label,
+                android.graphics.drawable.Icon.createWithResource(this,
+                        tile == A11yTile.class ? R.drawable.ic_tile_a11y : R.drawable.ic_tile_island),
+                getMainExecutor(), r -> L.i(this, "Thêm ô " + label + ": kết quả " + r));
     }
 
     private void addButton(LinearLayout root, String text, Runnable action) {

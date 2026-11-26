@@ -39,6 +39,10 @@ public class AppPickerActivity extends Activity {
         }
     }
 
+    /** true: chọn app MỞ NHANH trên đảo luôn hiện (pins = danh sách gói đã chọn, không có "ẩn"). */
+    static final String EXTRA_LAUNCHER = "launcher";
+    private boolean launcher;
+
     private final List<Row> rows = new ArrayList<>();
     private List<String> pins;
     private Set<String> hidden;
@@ -50,15 +54,16 @@ public class AppPickerActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         dp = getResources().getDisplayMetrics().density;
-        pins = ShareTargets.getPins(this);
-        hidden = ShareTargets.getHidden(this);
+        launcher = getIntent().getBooleanExtra(EXTRA_LAUNCHER, false);
+        pins = launcher ? QuickApps.getPackages(this) : ShareTargets.getPins(this);
+        hidden = launcher ? new java.util.HashSet<>() : ShareTargets.getHidden(this);
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding((int) (16 * dp), (int) (48 * dp), (int) (16 * dp), 0);
 
         TextView title = new TextView(this);
-        title.setText("Thêm app vào khay");
+        title.setText(launcher ? "App mở nhanh trên đảo" : "Thêm app vào khay");
         title.setTextSize(24);
         root.addView(title);
 
@@ -102,17 +107,27 @@ public class AppPickerActivity extends Activity {
     private void load() {
         PackageManager pm = getPackageManager();
         List<Row> out = new ArrayList<>();
-        for (ResolveInfo ri : ShareTargets.allCandidates(this)) {
-            CharSequence app = ri.activityInfo.applicationInfo.loadLabel(pm);
-            out.add(new Row(ShareTargets.key(ri), ri.loadLabel(pm), app, ri.loadIcon(pm)));
+        if (launcher) {
+            for (ResolveInfo ri : QuickApps.allLaunchable(this)) {
+                CharSequence app = ri.activityInfo.applicationInfo.loadLabel(pm);
+                out.add(new Row(ri.activityInfo.packageName, app, app, ri.loadIcon(pm)));
+            }
+        } else {
+            for (ResolveInfo ri : ShareTargets.allCandidates(this)) {
+                CharSequence app = ri.activityInfo.applicationInfo.loadLabel(pm);
+                out.add(new Row(ShareTargets.key(ri), ri.loadLabel(pm), app, ri.loadIcon(pm)));
+            }
         }
         Collections.sort(out, (a, b) -> a.label.toString().compareToIgnoreCase(b.label.toString()));
         runOnUiThread(() -> {
             rows.clear();
             rows.addAll(out);
             sortRows();
-            header.setText("Chạm để đổi: Bình thường → Ghim lên đầu → Ẩn khỏi khay.\n"
-                    + rows.size() + " lựa chọn chia sẻ. App cài sau này cũng sẽ có ở đây.");
+            header.setText(launcher
+                    ? "Chạm để chọn / bỏ app hiện trên đảo. Thứ tự trên đảo theo thứ tự bạn chọn.\n"
+                            + "Bật \"Đảo luôn hiện\" rồi chạm viên đảo để mở nhanh."
+                    : "Chạm để đổi: Bình thường → Ghim lên đầu → Ẩn khỏi khay.\n"
+                            + rows.size() + " lựa chọn chia sẻ. App cài sau này cũng sẽ có ở đây.");
             adapter.notifyDataSetChanged();
         });
     }
@@ -134,6 +149,12 @@ public class AppPickerActivity extends Activity {
     }
 
     private void cycle(Row r) {
+        if (launcher) {
+            if (!pins.remove(r.key)) pins.add(r.key);
+            QuickApps.setPackages(this, pins);
+            adapter.notifyDataSetChanged();
+            return;
+        }
         if (pins.contains(r.key)) {
             pins.remove(r.key);
             hidden.add(r.key);
@@ -186,6 +207,13 @@ public class AppPickerActivity extends Activity {
         ((TextView) ((LinearLayout) row.getChildAt(1)).getChildAt(1)).setText(
                 r.label.toString().equals(r.appName.toString()) ? "" : r.appName);
         int rank = rank(r);
+        if (launcher) {
+            boolean on = rank == 0;
+            state.setText(on ? "Trên đảo #" + (pins.indexOf(r.key) + 1) : "Không hiện");
+            state.setTextColor(on ? 0xFF1E88E5 : 0xFF777777);
+            row.setAlpha(1f);
+            return row;
+        }
         if (rank == 0) {
             state.setText("Ghim lên đầu");
             state.setTextColor(0xFF1E88E5);

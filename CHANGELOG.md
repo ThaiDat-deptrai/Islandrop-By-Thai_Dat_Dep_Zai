@@ -2,6 +2,17 @@
 
 Định dạng theo [Keep a Changelog](https://keepachangelog.com/vi/1.1.0/).
 
+## [1.2] – 2026-11-26
+
+### Thêm
+- **Ô cài đặt nhanh "Trợ năng đảo"**: chạm để tắt/bật Trợ năng của IslandDrop — dùng khi app ngân hàng (vd MB Bank) yêu cầu tắt Trợ năng trước khi đăng nhập. Cần quyền `WRITE_SECURE_SETTINGS` (cấp qua adb); chưa có quyền thì ô mở trang Trợ năng.
+- **Chế độ "Đảo luôn hiện"** (ô cài đặt nhanh + nút trong app): viên đen luôn hiện quanh camera, chạm để mở khay **app mở nhanh**; chạm lại hoặc chạm ra ngoài để thu. Tự ẩn khi xoay ngang.
+- Màn hình **chọn app mở nhanh** (nút "+" trên khay mở nhanh, hoặc trong app).
+- Nút trong app để thêm 2 ô vào thanh cài đặt nhanh (Android 13+).
+
+### Đổi
+- Tắt Trợ năng bằng ô cài đặt nhanh sẽ không bị cơ chế tự bật lại bật ngược lại.
+
 ## [1.1] – 2026-11-24
 
 ### Sửa

@@ -17,6 +17,8 @@ IslandDrop là một app Android nhỏ, viết bằng Java, **không cần root*
 | **Giữ ảnh đang xem** *(Thư viện Tecno)* | Mở một ảnh, giữ ngón tay lên ảnh: ảnh thu nhỏ **bay lên đảo**, khay mở ra để chạm chọn app. |
 | **Thẻ "Đã sao chép"** | Bấm **Sao chép / Copy** ở bất kỳ app nào: đảo hiện thẻ xem trước. Giữ thẻ rồi kéo tới app, hoặc chạm thẻ rồi chạm app. |
 | **Nút "+" thêm app** | Ô cuối khay. Mở danh sách mọi app nhận chia sẻ: **Ghim lên đầu / Bình thường / Ẩn**. App cài sau này tự có trong danh sách. |
+| **Đảo luôn hiện** | Bật bằng ô cài đặt nhanh *Đảo luôn hiện*: viên đen luôn nằm quanh camera, chạm để mở khay **app mở nhanh** (chọn app bằng nút "+"). Tự ẩn khi xoay ngang. |
+| **Tắt Trợ năng 1 chạm** | Ô cài đặt nhanh *Trợ năng đảo*: tắt trước khi vào app ngân hàng đòi tắt Trợ năng (vd MB Bank), bật lại khi xong. |
 | **Tự cuộn mượt** | Khay nhiều app: rê sát mép trái/phải để tự cuộn (có gia tốc), hoặc vuốt ngang khi ở chế độ chạm. |
 | **Hiệu ứng lò xo 120Hz** | Mọi chuyển động dùng lò xo vật lý, nảy nhẹ giống Vivo. |
 | **Thông minh dần** | App bạn hay gửi tự lên đầu khay. |
@@ -45,6 +47,16 @@ Khi không kéo gì, cửa sổ của app **vô hình và không cản chạm** 
    - **BẬT khay kéo thả**.
 4. Trên Xiaomi / Oppo / Vivo / Tecno: vào cài đặt pin của máy, bật **Tự khởi động** cho IslandDrop.
 5. **Đừng dùng nút "Dọn dẹp" để tắt IslandDrop.** Khi hệ thống giết app, Trợ năng bị ngắt và Android không tự bật lại. App sẽ hiện thông báo **"Bấm để bật lại"** — bấm vào, tắt rồi bật lại *IslandDrop: giữ ảnh để gửi*.
+
+### App ngân hàng báo "tắt Trợ năng"
+
+Một số app ngân hàng (vd **MB Bank**) không cho đăng nhập khi có dịch vụ Trợ năng lạ đang bật. Đây là cơ chế bảo vệ tài khoản của ngân hàng — IslandDrop **không** tìm cách né nó. Thay vào đó:
+
+1. Kéo thanh thông báo xuống, chạm ô **Trợ năng đảo** để tắt (thêm ô bằng nút trong app, hoặc bút chì → kéo ô lên).
+2. Dùng app ngân hàng.
+3. Chạm ô lần nữa để bật lại.
+
+Khay kéo thả ảnh/chữ không cần Trợ năng nên vẫn chạy khi tắt.
 
 ### (Tùy chọn) Cho app tự bật lại Trợ năng
 
@@ -127,6 +139,10 @@ app/src/main/java/vn/islanddrop/
 ├── AppPickerActivity.java  Màn hình "Thêm app" (ghim / ẩn)
 ├── MainActivity.java       Màn hình cài đặt, xin quyền
 ├── BootReceiver.java       Tự bật lại sau khởi động / cập nhật
+├── A11yToggle.java         Bật/tắt Trợ năng của chính app (WRITE_SECURE_SETTINGS)
+├── A11yTile.java           Ô cài đặt nhanh "Trợ năng đảo"
+├── IslandTile.java         Ô cài đặt nhanh "Đảo luôn hiện"
+├── QuickApps.java          Danh sách app mở nhanh trên đảo
 └── L.java                  Ghi log ra file
 ```
 

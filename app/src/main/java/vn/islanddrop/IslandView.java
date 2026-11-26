@@ -47,9 +47,16 @@ final class IslandView extends View implements Choreographer.FrameCallback {
 
         void onDragFinished();
 
-        /** Chạm ô "+ Thêm app": mở màn hình chọn app hiện trên khay. */
-        void onAddApps();
+        /** Chạm ô "+": mở màn hình chọn app (launcher = true: chọn app mở nhanh). */
+        void onAddApps(boolean launcher);
+
+        /** Chạm một app trong khay mở nhanh. */
+        void onLaunchApp(ShareTargets.Target t);
     }
+
+    /** Khay đang ở chế độ "mở nhanh app" (đảo luôn hiện) thay vì gửi nội dung. */
+    private boolean launchMode;
+    private long lastOutsideDismiss;
 
     private static final int MODE_NONE = 0, MODE_DRAG = 1, MODE_TAP = 2, MODE_STATUS = 3, MODE_CLIP = 4;
     private static final long TAP_TIMEOUT_MS = 8000;
@@ -180,6 +187,7 @@ final class IslandView extends View implements Choreographer.FrameCallback {
                 }
                 removeCallbacks(dismissRunnable);   // kéo thả luôn được ưu tiên hơn chế độ chạm
                 mode = MODE_DRAG;
+                launchMode = false;
                 useDefaultHint();
                 chipGesture = false;
                 flingVel = 0f;
@@ -257,6 +265,7 @@ final class IslandView extends View implements Choreographer.FrameCallback {
         if (mode == MODE_DRAG) return;
         removeCallbacks(dismissRunnable);
         mode = MODE_TAP;
+        launchMode = false;
         useDefaultHint();
         tapUri = src;
         tapText = null;
@@ -280,6 +289,7 @@ final class IslandView extends View implements Choreographer.FrameCallback {
         if (mode == MODE_DRAG) return;
         removeCallbacks(dismissRunnable);
         mode = MODE_CLIP;
+        launchMode = false;
         tapUri = null;
         tapText = text;
         String oneLine = text.replaceAll("\\s+", " ").trim();
@@ -298,6 +308,32 @@ final class IslandView extends View implements Choreographer.FrameCallback {
         postDelayed(dismissRunnable, CLIP_TIMEOUT_MS);
     }
 
+    /** Mở khay app nhanh (chạm viên đảo luôn hiện). Đang mở thì thu lại. */
+    void toggleLauncher(List<ShareTargets.Target> apps) {
+        if (mode == MODE_DRAG) return;
+        // chạm viên đảo khi khay đang mở: khay đã tự đóng do "chạm ra ngoài" -> đừng mở lại
+        if (android.os.SystemClock.uptimeMillis() - lastOutsideDismiss < 450) return;
+        if (mode == MODE_TAP && launchMode) {
+            dismiss();
+            return;
+        }
+        removeCallbacks(dismissRunnable);
+        mode = MODE_TAP;
+        launchMode = true;
+        useDefaultHint();
+        tapUri = null;
+        tapText = null;
+        setTargets(apps);
+        kindText = "Mở nhanh";
+        scroll = 0f;
+        stopScroll();
+        flingVel = 0f;
+        setInteractiveSafely(true);
+        expand.target = 2f;
+        kick();
+        postDelayed(dismissRunnable, TAP_TIMEOUT_MS);
+    }
+
     private void useDefaultHint() {
         hintW = hintWDefault;
         hintH = hintHDefault;
@@ -309,6 +345,7 @@ final class IslandView extends View implements Choreographer.FrameCallback {
         if (mode == MODE_DRAG) return;
         removeCallbacks(dismissRunnable);
         mode = MODE_NONE;
+        launchMode = false;
         tapUri = null;
         tapText = null;
         chipGesture = false;
@@ -326,7 +363,10 @@ final class IslandView extends View implements Choreographer.FrameCallback {
         switch (e.getActionMasked()) {
             case MotionEvent.ACTION_OUTSIDE:
                 // viên chờ (vd "Kéo ảnh lên đây") giữ nguyên khi chạm vào ảnh nổi bên dưới
-                if (!(mode == MODE_STATUS && statusSticky)) dismiss();
+                if (!(mode == MODE_STATUS && statusSticky)) {
+                    if (launchMode) lastOutsideDismiss = android.os.SystemClock.uptimeMillis();
+                    dismiss();
+                }
                 return true;
             case MotionEvent.ACTION_DOWN:
                 if (mode == MODE_STATUS || !rect.contains(x, y)) {
@@ -429,8 +469,16 @@ final class IslandView extends View implements Choreographer.FrameCallback {
     private void selectTarget(int i) {
         ShareTargets.Target t = targets.get(i);
         if (t == ShareTargets.ADD) {
-            host.onAddApps();
+            host.onAddApps(launchMode);
             dismiss();
+            return;
+        }
+        if (launchMode) {
+            hover[i].velocity = -3f;      // nhún nhẹ khi chọn
+            kick();
+            host.onLaunchApp(t);
+            removeCallbacks(dismissRunnable);
+            postDelayed(dismissRunnable, 140);
             return;
         }
         if (tapUri == null && tapText == null) return;

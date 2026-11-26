@@ -34,6 +34,11 @@
             <action android:name="android.intent.action.SEND" />
             <data android:mimeType="text/plain" />
         </intent>
+        <!-- App mở nhanh trên đảo luôn hiện -->
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
     </queries>
 
     <application
@@ -95,6 +100,29 @@
             <meta-data
                 android:name="android.accessibilityservice"
                 android:resource="@xml/viewer_watcher" />
+        </service>
+
+        <!-- Ô cài đặt nhanh -->
+        <service
+            android:name=".A11yTile"
+            android:exported="true"
+            android:icon="@drawable/ic_tile_a11y"
+            android:label="Trợ năng đảo"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".IslandTile"
+            android:exported="true"
+            android:icon="@drawable/ic_tile_island"
+            android:label="Đảo luôn hiện"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
         </service>
 
         <provider
