@@ -126,6 +126,10 @@ public class MediaListener extends NotificationListenerService {
                 Bitmap art = md.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART);
                 if (art == null) art = md.getBitmap(MediaMetadata.METADATA_KEY_ART);
                 if (art == null) art = md.getBitmap(MediaMetadata.METADATA_KEY_DISPLAY_ICON);
+                if (art == null && md.getDescription() != null) art = md.getDescription().getIconBitmap();
+                if (art == null) art = localArt(md);
+                // không có ảnh bìa trong máy (vd YouTube chỉ gửi link Internet): dùng icon app nhạc
+                if (art == null) art = appIcon(c.getPackageName());
                 s = new MediaState(c, c.getPackageName(), title, artist == null ? "" : artist, art,
                         ps.getState() == PlaybackState.STATE_PLAYING,
                         md.getLong(MediaMetadata.METADATA_KEY_DURATION),
@@ -134,6 +138,41 @@ public class MediaListener extends NotificationListenerService {
         }
         current = s;
         notifyService();
+    }
+
+    /** Ảnh bìa qua link nội bộ (content:// hoặc android.resource://). Không tải từ Internet. */
+    private Bitmap localArt(MediaMetadata md) {
+        for (String key : new String[]{MediaMetadata.METADATA_KEY_ALBUM_ART_URI,
+                MediaMetadata.METADATA_KEY_ART_URI, MediaMetadata.METADATA_KEY_DISPLAY_ICON_URI}) {
+            String s = md.getString(key);
+            if (s == null || !(s.startsWith("content://") || s.startsWith("android.resource://"))) continue;
+            try (java.io.InputStream in = getContentResolver().openInputStream(android.net.Uri.parse(s))) {
+                Bitmap b = android.graphics.BitmapFactory.decodeStream(in);
+                if (b != null) return b;
+            } catch (Exception ignored) {
+                // link không đọc được
+            }
+        }
+        return null;
+    }
+
+    private final java.util.Map<String, Bitmap> iconCache = new java.util.HashMap<>();
+
+    private Bitmap appIcon(String pkg) {
+        Bitmap cached = iconCache.get(pkg);
+        if (cached != null) return cached;
+        try {
+            android.graphics.drawable.Drawable d = getPackageManager().getApplicationIcon(pkg);
+            int s = (int) (96 * getResources().getDisplayMetrics().density / 3f * 2f);
+            Bitmap b = Bitmap.createBitmap(s, s, Bitmap.Config.ARGB_8888);
+            android.graphics.Canvas cv = new android.graphics.Canvas(b);
+            d.setBounds(0, 0, s, s);
+            d.draw(cv);
+            iconCache.put(pkg, b);
+            return b;
+        } catch (Exception ex) {
+            return null;
+        }
     }
 
     private void notifyService() {

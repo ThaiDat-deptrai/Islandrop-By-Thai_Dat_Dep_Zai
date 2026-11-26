@@ -2,6 +2,11 @@
 
 Định dạng theo [Keep a Changelog](https://keepachangelog.com/vi/1.1.0/).
 
+## [1.3.1] – 2026-11-26
+
+### Sửa
+- Đảo không có ảnh bìa với YouTube (YouTube chỉ gửi link ảnh trên Internet, IslandDrop không có quyền Internet). Giờ thử thêm icon trong mô tả bài và link ảnh nội bộ; vẫn không có thì dùng **icon app nhạc** (sóng nhạc và viền sáng lấy màu theo icon).
+
 ## [1.3] – 2026-11-26
 
 Đảo luôn hiện kiểu **Atoll**.
