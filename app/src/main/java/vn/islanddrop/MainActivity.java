@@ -47,6 +47,33 @@ public class MainActivity extends Activity {
         c.getSharedPreferences(PREFS, MODE_PRIVATE).edit().putBoolean(KEY_ALWAYS, on).apply();
     }
 
+    /** Nhân vật trong viên thuốc (mặc định "eyes" như Atoll). */
+    static String character(Context c) {
+        return c.getSharedPreferences(PREFS, MODE_PRIVATE).getString("character", "eyes");
+    }
+
+    private void pickCharacter() {
+        java.util.List<Characters.Ch> list = new java.util.ArrayList<>(Characters.all().values());
+        String[] names = new String[list.size()];
+        int checked = 0;
+        String cur = character(this);
+        for (int i = 0; i < list.size(); i++) {
+            names[i] = list.get(i).name;
+            if (list.get(i).id.equals(cur)) checked = i;
+        }
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("Nhân vật trên đảo")
+                .setSingleChoiceItems(names, checked, (d, which) -> {
+                    getSharedPreferences(PREFS, MODE_PRIVATE).edit()
+                            .putString("character", list.get(which).id).apply();
+                    if (DropService.instance != null) DropService.instance.applyCharacter();
+                    d.dismiss();
+                    refresh();
+                })
+                .setNegativeButton("Đóng", null)
+                .show();
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -116,6 +143,8 @@ public class MainActivity extends Activity {
 
         addButton(root, "Nhạc trên đảo: cho phép đọc nhạc đang phát", () -> startActivity(
                 new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)));
+
+        addButton(root, "Chọn nhân vật trên đảo", this::pickCharacter);
 
         addButton(root, "Chọn app mở nhanh trên đảo", () -> startActivity(
                 new Intent(this, AppPickerActivity.class).putExtra(AppPickerActivity.EXTRA_LAUNCHER, true)));

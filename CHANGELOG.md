@@ -2,6 +2,23 @@
 
 Định dạng theo [Keep a Changelog](https://keepachangelog.com/vi/1.1.0/).
 
+## [1.4] – 2026-11-26
+
+Viên đảo luôn hiện được làm lại **theo đúng mã nguồn Atoll** (Dynamic Island cho Windows, MIT — xem [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)).
+
+### Thêm
+- **38 nhân vật** trong viên thuốc (Đôi mắt mặc định, Mèo, Ma, Robot, Cá, Hành tinh, Slime, Nhịp tim, Thỏ, Cú mèo, Khủng long, Ngôi sao, Mây, Claude, Cua Clawd, Cún, Cáo, Gấu trúc, Gấu, Ếch, Chim cánh cụt, Gà con, Heo, Koala, Chuột, Ong, Bạch tuộc, Nấm, Xương rồng, Người ngoài hành tinh, Dơi, Mặt trăng, Mặt trời, Ngọn lửa, Giọt nước, Trái tim, Bí ngô, Không có). Mỗi nhân vật thở, chớp mắt, đảo mắt, nhún theo nhạc với chuyển động riêng. Chọn trong app: **"Chọn nhân vật trên đảo"**.
+- **7 cảm xúc** khi chạm vào nhân vật: yêu, giận, ngạc nhiên, buồn, chóng mặt, cười, đeo kính râm.
+- **Aura "Aurora"** (xanh–tím–xanh lơ; nhân vật Claude/Clawd: cam) trượt 1 chu kỳ / 4s, dâng từ mép dưới, thở 0.45↔0.9, viền dưới phát sáng.
+- **Bóng đổ** mềm; **đổi bài** thì bóng loé màu ảnh bìa rồi tắt dần trong 1.3s, nhân vật nhảy mừng.
+- **Bọng nhạc**: mép dưới phồng một bọng đi lang thang khi phát nhạc; **sóng nhạc** 4 vạch chu kỳ ngẫu nhiên, màu chủ đạo của ảnh bìa.
+- **Vòng tiến độ** khi hẹn giờ (chấm xanh, chạy theo chiều kim đồng hồ).
+- Lò xo bề ngang 380/24, **nhún khi chạm** (96%, lò xo 520/18), cú "đẩy" mỗi lần đổi trạng thái, **hiện lại mềm** sau khi đóng bảng.
+
+### Đổi
+- Viên thuốc tách thành cửa sổ vẽ (không nhận chạm) + cửa sổ cảm ứng vừa khít: bóng và aura không còn chặn kéo thanh thông báo.
+- Không tạo đối tượng đồ hoạ mới mỗi khung hình (tiết kiệm RAM); đứng yên vẽ 30 khung hình/giây, chuyển động vẽ đủ tốc độ màn hình.
+
 ## [1.3.1] – 2026-11-26
 
 ### Sửa

@@ -17,6 +17,7 @@ IslandDrop là một app Android nhỏ, viết bằng Java, **không cần root*
 | **Giữ ảnh đang xem** *(Thư viện Tecno)* | Mở một ảnh, giữ ngón tay lên ảnh: ảnh thu nhỏ **bay lên đảo**, khay mở ra để chạm chọn app. |
 | **Thẻ "Đã sao chép"** | Bấm **Sao chép / Copy** ở bất kỳ app nào: đảo hiện thẻ xem trước. Giữ thẻ rồi kéo tới app, hoặc chạm thẻ rồi chạm app. |
 | **Nút "+" thêm app** | Ô cuối khay. Mở danh sách mọi app nhận chia sẻ: **Ghim lên đầu / Bình thường / Ẩn**. App cài sau này tự có trong danh sách. |
+| **38 nhân vật trên đảo** | Đôi mắt, mèo, ma, robot, cá, thỏ, cú, khủng long, cún, cáo, gấu trúc, ếch, chim cánh cụt, bạch tuộc, Claude, cua Clawd… Mỗi nhân vật thở, chớp mắt, nhún theo nhạc; **chạm vào nhân vật** để xem 7 cảm xúc. Chọn trong app. |
 | **Đảo luôn hiện kiểu Atoll** | Bật bằng ô cài đặt nhanh *Đảo luôn hiện*. Viên đảo hiện **hoạt động trực tiếp**: ảnh bìa + sóng nhạc khi phát nhạc, đếm ngược khi hẹn giờ, % pin khi cắm sạc. **Chạm / vuốt xuống** mở bảng 3 tab: **Nhạc** (điều khiển + tua), **Ứng dụng** (app mở nhanh), **Hẹn giờ**. Vuốt ngang để chuyển bài. Tự ẩn khi xoay ngang. |
 | **Tắt Trợ năng 5 phút** | Cho app ngân hàng đòi tắt Trợ năng (vd MB Bank): bấm **"Tắt Trợ năng 5 phút"** ngay trong thông báo *IslandDrop đang chạy* (hoặc tab Ứng dụng, hoặc ô *Trợ năng đảo*). Hết 5 phút **tự bật lại**. |
 | **Tự cuộn mượt** | Khay nhiều app: rê sát mép trái/phải để tự cuộn (có gia tốc), hoặc vuốt ngang khi ở chế độ chạm. |
@@ -144,7 +145,8 @@ app/src/main/java/vn/islanddrop/
 ├── A11yTile.java           Ô cài đặt nhanh "Trợ năng đảo"
 ├── IslandTile.java         Ô cài đặt nhanh "Đảo luôn hiện"
 ├── QuickApps.java          Danh sách app mở nhanh trên đảo
-├── PillView.java           Viên đảo luôn hiện: hoạt động trực tiếp (nhạc / hẹn giờ / sạc)
+├── PillView.java           Viên đảo luôn hiện kiểu Atoll: aura, bóng, bọng nhạc, lò xo, trạng thái
+├── Characters.java         38 nhân vật + 7 cảm xúc (chuyển từ Atoll)
 ├── PanelView.java          Bảng mở rộng 3 tab: Nhạc, Ứng dụng, Hẹn giờ
 ├── MediaListener.java      Đọc nhạc đang phát (MediaSession)
 ├── MediaState.java         Trạng thái bài nhạc
@@ -176,3 +178,5 @@ Cách hoạt động chi tiết: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 ## 📜 Giấy phép
 
 [MIT](LICENSE) © 2026 ThaiDat-deptrai
+
+Viên đảo luôn hiện (hoạt ảnh, 38 nhân vật, cảm xúc) được chuyển từ **[Atoll — Dynamic Island cho Windows](https://github.com/Fuwni/dynamic-island-windows)** (MIT © 2026 mykolaichechelnytskyi). Chi tiết: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

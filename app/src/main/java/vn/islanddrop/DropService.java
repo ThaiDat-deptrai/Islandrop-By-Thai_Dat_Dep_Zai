@@ -23,6 +23,7 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.view.DragEvent;
 import android.view.Gravity;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 
@@ -356,6 +357,7 @@ public class DropService extends Service implements IslandView.Host {
     private int pillType;
     private PanelView panel;
     private long timerEnd;              // SystemClock.elapsedRealtime(); 0 = không hẹn giờ
+    private long timerTotal;            // tổng thời gian hẹn (cho vòng tiến độ)
     private long chargeUntil, doneUntil;
     private BroadcastReceiver powerReceiver;
     private static final long PANEL_IDLE_MS = 12_000;
@@ -385,15 +387,18 @@ public class DropService extends Service implements IslandView.Host {
         String label = null;
         Bitmap art = null;
         boolean playing = false;
+        float prog = -1f;
         if (now < chargeUntil) {
             kind = PillView.K_CHARGE;
             label = batteryPercent() + "%";
         } else if (now < doneUntil) {
             kind = PillView.K_TIMER;
             label = "Hết giờ";
+            prog = 1f;
         } else if (timerEnd > 0) {
             kind = PillView.K_TIMER;
             label = PanelView.fmt(timerEnd - now);
+            prog = timerTotal > 0 ? 1f - (timerEnd - now) / (float) timerTotal : 0f;
         } else if (m != null) {
             kind = PillView.K_MEDIA;
             art = m.art;
@@ -401,18 +406,18 @@ public class DropService extends Service implements IslandView.Host {
         } else {
             kind = PillView.K_IDLE;
         }
-        // giãn cửa sổ trước để lò xo có chỗ chạy; thu lại khi lò xo đã dừng (onWidthSettled)
-        if (kind != PillView.K_IDLE) setPillWindowWidth(PillView.maxWidthPx(this));
-        pill.setState(kind, art, playing, label);
+        String track = m != null ? m.pkg + "|" + m.title : null;
+        pill.setState(kind, art, playing, label, prog, track);
     }
 
-    private void setPillWindowWidth(int px) {
-        if (pill == null || pillLp == null || pillLp.width == px) return;
-        pillLp.width = px;
+    /** Cửa sổ cảm ứng luôn vừa khít bề ngang viên thuốc (cửa sổ vẽ thì không nhận chạm). */
+    private void setTouchWidth(int px) {
+        if (pillTouch == null || touchLp == null || touchLp.width == px) return;
+        touchLp.width = px;
         try {
-            pillWm.updateViewLayout(pill, pillLp);
+            pillWm.updateViewLayout(pillTouch, touchLp);
         } catch (RuntimeException ex) {
-            L.i(this, "Đổi cỡ viên đảo lỗi: " + ex);
+            L.i(this, "Đổi cỡ vùng chạm đảo lỗi: " + ex);
         }
     }
 
@@ -440,8 +445,8 @@ public class DropService extends Service implements IslandView.Host {
         }
 
         @Override
-        public void onWidthSettled(int px) {
-            if (pill != null && pill.kind() == PillView.K_IDLE) setPillWindowWidth(PillView.idleWidthPx(DropService.this));
+        public void onPillWidth(int px) {
+            setTouchWidth(px);
         }
     };
 
@@ -485,7 +490,7 @@ public class DropService extends Service implements IslandView.Host {
             return;
         }
         panel = v;
-        v.animateOpen(pill.getWidth(), pill.getHeight());
+        v.animateOpen(pill.pillWidth(), PillView.pillHeightPx(this));
         main.removeCallbacks(panelRefresh);
         main.postDelayed(panelRefresh, 500);
         resetPanelIdle();
@@ -503,12 +508,13 @@ public class DropService extends Service implements IslandView.Host {
         main.removeCallbacks(panelRefresh);
         main.removeCallbacks(panelIdle);
         WindowManager w = pillWm;
-        v.animateClose(pill != null ? pill.getWidth() : 300, pill != null ? pill.getHeight() : 90, () -> {
+        v.animateClose(pill != null ? pill.pillWidth() : 300, PillView.pillHeightPx(this), () -> {
             try {
                 if (w != null) w.removeViewImmediate(v);
             } catch (RuntimeException ignored) {
                 // đã gỡ
             }
+            if (pill != null) pill.playEnter();   // MorphIn: viên thuốc hiện lại mềm như Atoll
         });
     }
 
@@ -608,6 +614,7 @@ public class DropService extends Service implements IslandView.Host {
         @Override
         public void startTimer(long ms) {
             timerEnd = SystemClock.elapsedRealtime() + ms;
+            timerTotal = ms;
             doneUntil = 0;
             main.removeCallbacks(timerTick);
             main.post(timerTick);
@@ -617,7 +624,10 @@ public class DropService extends Service implements IslandView.Host {
 
         @Override
         public void addTimer(long ms) {
-            if (timerEnd > 0) timerEnd += ms;
+            if (timerEnd > 0) {
+                timerEnd += ms;
+                timerTotal += ms;
+            }
             updatePill();
             if (panel != null) panel.refresh();
         }
@@ -737,32 +747,60 @@ public class DropService extends Service implements IslandView.Host {
         applyAlwaysIsland();
     }
 
-    private void addPill() {
+    private View pillTouch;
+    private WindowManager.LayoutParams touchLp;
+
+    private WindowManager.LayoutParams overlayLp(int w, int h, int type, int flags, String title) {
         float dp = getResources().getDisplayMetrics().density;
-        PillView v = new PillView(this, pillListener);
-        // Có Trợ năng: dùng lớp phủ Trợ năng, nằm TRÊN thanh trạng thái nên chạm vào camera luôn trúng.
-        // Không có: lớp phủ thường (nằm dưới thanh trạng thái HiOS, chạm có thể bị thanh trạng thái nhận).
-        ViewerWatcher a11y = ViewerWatcher.instance;
-        WindowManager targetWm = a11y != null ? a11y.getSystemService(WindowManager.class) : wm;
-        int type = a11y != null ? WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY
-                : WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
-        WindowManager.LayoutParams p = new WindowManager.LayoutParams(
-                PillView.idleWidthPx(this), PillView.heightPx(this),
-                type,
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+        WindowManager.LayoutParams p = new WindowManager.LayoutParams(w, h, type,
+                flags | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
                         | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
                         | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
                 PixelFormat.TRANSLUCENT);
         p.gravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
-        p.y = (int) (5 * dp);
+        p.y = (int) (4 * dp);
         p.layoutInDisplayCutoutMode = Build.VERSION.SDK_INT >= 30
                 ? WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
                 : WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
-        p.setTitle("IslandDrop-pill");
+        p.setTitle(title);
+        return p;
+    }
+
+    /**
+     * Hai cửa sổ: (1) cửa sổ VẼ rộng (viên thuốc + bóng + aura), KHÔNG nhận chạm;
+     * (2) cửa sổ CẢM ỨNG trong suốt, vừa khít viên thuốc — để bóng/aura không chặn kéo thanh thông báo.
+     */
+    private void addPill() {
+        PillView v = new PillView(this, pillListener);
+        v.setCharacter(MainActivity.character(this));
+        // Có Trợ năng: lớp phủ Trợ năng, nằm TRÊN thanh trạng thái nên chạm vào camera luôn trúng.
+        // Không có: lớp phủ thường (dưới thanh trạng thái HiOS; phải mờ <= 0.8 để chạm xuyên qua phần bóng).
+        ViewerWatcher a11y = ViewerWatcher.instance;
+        WindowManager targetWm = a11y != null ? a11y.getSystemService(WindowManager.class) : wm;
+        int type = a11y != null ? WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY
+                : WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
+        WindowManager.LayoutParams p = overlayLp(PillView.windowWidthPx(this), PillView.windowHeightPx(this),
+                type, WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE, "IslandDrop-pill");
+        if (a11y == null) p.alpha = IDLE_ALPHA;
+
+        View touch = new View(this) {
+            @Override
+            public boolean onTouchEvent(MotionEvent e) {
+                PillView pv = pill;
+                if (pv == null) return false;
+                float offset = (pv.getWidth() - getWidth()) / 2f;
+                return pv.handleTouch(e, offset);
+            }
+        };
+        WindowManager.LayoutParams tp = overlayLp((int) v.pillWidth(), PillView.pillHeightPx(this),
+                type, 0, "IslandDrop-pill-touch");
         try {
             targetWm.addView(v, p);
+            targetWm.addView(touch, tp);
             pill = v;
             pillLp = p;
+            pillTouch = touch;
+            touchLp = tp;
             pillWm = targetWm;
             pillType = type;
             registerPower();
@@ -770,6 +808,11 @@ public class DropService extends Service implements IslandView.Host {
             L.i(this, "Đảo luôn hiện: bật (" + (a11y != null ? "lớp phủ Trợ năng" : "lớp phủ thường") + ")");
         } catch (RuntimeException ex) {
             L.i(this, "Không hiện được đảo luôn hiện: " + ex);
+            try {
+                targetWm.removeViewImmediate(v);
+            } catch (RuntimeException ignored) {
+                // chưa thêm
+            }
         }
     }
 
@@ -777,15 +820,25 @@ public class DropService extends Service implements IslandView.Host {
         if (pill == null) return;
         closePanelNow();
         unregisterPower();
-        try {
-            pillWm.removeViewImmediate(pill);
-        } catch (RuntimeException ignored) {
-            // đã gỡ (vd dịch vụ Trợ năng đã chết kéo theo cửa sổ)
+        for (View v : new View[]{pillTouch, pill}) {
+            if (v == null) continue;
+            try {
+                pillWm.removeViewImmediate(v);
+            } catch (RuntimeException ignored) {
+                // đã gỡ (vd dịch vụ Trợ năng đã chết kéo theo cửa sổ)
+            }
         }
         pill = null;
         pillLp = null;
+        pillTouch = null;
+        touchLp = null;
         pillWm = null;
         L.i(this, "Đảo luôn hiện: tắt");
+    }
+
+    /** Đổi nhân vật (từ màn hình chọn nhân vật). */
+    void applyCharacter() {
+        if (pill != null) pill.setCharacter(MainActivity.character(this));
     }
 
     /** Gọi sau khi người dùng đổi ghim/ẩn app. */
